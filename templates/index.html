@@ -1,0 +1,39 @@
+<link href="{{ url_for('static', filename='css/jquery.terminal.css') }}" rel="stylesheet"/>
+<div id="mushy_client"></div>
+
+<script type=text/javascript>
+  var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+</script>
+
+<script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+<script src="{{ url_for('static', filename='js/jquery.mousewheel-min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jquery.terminal-0.6.3.min.js') }}"></script>
+    
+<script>
+jQuery(function($, undefined) {
+    var t = $('#mushy_client').terminal(function(command, term) {
+        if (command !== '') {
+            try {
+                $.getJSON($SCRIPT_ROOT + '/_send', {
+                    'line': command
+                });
+            } catch(e) {
+                term.error(new String(e));
+            }
+        } else {
+           term.echo('');
+        }
+    }, {
+        greetings: 'Mushy Web Client',
+        name: 'mushy_client',
+        height: 200,
+        prompt: '> '});
+
+    var cid = $.getJSON($SCRIPT_ROOT + '/_getcid')
+    var source = new EventSource('/stream');
+    source.onmessage = function(event) {
+        t.echo(event.data);
+    };
+
+});
+</script>
