@@ -11,11 +11,15 @@
     
 <script>
 jQuery(function($, undefined) {
+    var uid = undefined;
+    var source = undefined;
+
     var t = $('#mushy_client').terminal(function(command, term) {
         if (command !== '') {
             try {
                 $.getJSON($SCRIPT_ROOT + '/_send', {
-                    'line': command
+                    'line': command,
+                    'uid': uid
                 });
             } catch(e) {
                 term.error(new String(e));
@@ -29,11 +33,16 @@ jQuery(function($, undefined) {
         height: 200,
         prompt: '> '});
 
-    var cid = $.getJSON($SCRIPT_ROOT + '/_getcid')
-    var source = new EventSource('/stream');
-    source.onmessage = function(event) {
-        t.echo(event.data);
-    };
+
+    $.getJSON($SCRIPT_ROOT + '/_register', {},
+        function(data) {
+            uid = (data["uid"]);
+            source = new EventSource('/stream?uid=' + uid);
+            source.onmessage = function(event) {
+                t.echo(event.data);
+            };
+        });
+
 
 });
 </script>
