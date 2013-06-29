@@ -8,7 +8,7 @@ red = redis.StrictRedis()
 app.debug = True
 app.threaded = True
 app.clients = {}
-app.uid = 1337
+app.uid = 1
 
 def event_stream(uid):
     pubsub = red.pubsub()
@@ -16,6 +16,7 @@ def event_stream(uid):
     for message in pubsub.listen():
         data = str(message['data'])
         lines = data.split("\n")
+        # this is a fix for multi-line input
         for i in range(len(lines)):
             if i == len(lines) - 1:
                 yield 'data: ' + lines[i] + '\n\n'
@@ -25,9 +26,8 @@ def event_stream(uid):
 
 @app.route('/stream')
 def stream():
-    # need to get some stuff
     uid = request.args.get('uid')
-    print "IN STREAM() " + str(uid)
+    print "Event stream now serving: UID " + str(uid)
     return Response(event_stream(uid), mimetype="text/event-stream")
 
 
@@ -39,14 +39,14 @@ def send():
     return Response(status=204)
 
 
-def recv(text, client_ip):
-    red.publish(str(client_ip), text)
+def recv(text, uid):
+    red.publish(str(uid), text)
 
 
 @app.route('/_register')
 def register():
     uid = current_app.uid
-    current_app.clients[str(uid)] = client.Client(callback=recv, client_ip=uid)
+    current_app.clients[str(uid)] = client.Client(callback=recv, uid=uid)
     current_app.uid += 1
     return jsonify({"uid": uid})
 
@@ -55,8 +55,6 @@ def register():
 def index():
     val = render_template('index.html')
     print "Serving: " + str(request.remote_addr)
-    #if request.remote_addr not in current_app.clients:
-    #    current_app.clients[request.remote_addr] = client.Client(callback=recv, client_ip=request.remote_addr)
     return val
 
 

@@ -1,4 +1,5 @@
 <link href="{{ url_for('static', filename='css/jquery.terminal.css') }}" rel="stylesheet"/>
+<h2>Mushy Web Client</h2>
 <div id="mushy_client"></div>
 
 <script type=text/javascript>
@@ -6,10 +7,22 @@
 </script>
 
 <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
-<script src="{{ url_for('static', filename='js/jquery.mousewheel-min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jquery.mousewheel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jquery.terminal-0.6.3.min.js') }}"></script>
     
 <script>
+jQuery.fn.center = function () {
+    this.css("position","absolute");
+    this.css("top", 100 + "px");
+    this.css("left", Math.max(0, (($(window).width() - $(this).outerWidth()) / 2) + 
+                                                $(window).scrollLeft()) + "px");
+    return this;
+}
+
+$('#mushy_client').css("height", 400);
+$('#mushy_client').css("width", 800);
+$('#mushy_client').center();
+
 jQuery(function($, undefined) {
     var uid = undefined;
     var source = undefined;
@@ -28,10 +41,18 @@ jQuery(function($, undefined) {
            term.echo('');
         }
     }, {
-        greetings: 'Mushy Web Client',
+        greetings: 'Mushy Web Client\nAfter you see the "1", type in your username.\nYeah, this is a bug.',
         name: 'mushy_client',
-        height: 200,
-        prompt: '> '});
+        height: 400,
+        width: 800,
+        prompt: '> ',
+        onExit: function(term) {
+            $.getJSON($SCRIPT_ROOT + '/_send', {
+                    'line': "logout",
+                    'uid': uid
+                });
+        }
+    });
 
 
     $.getJSON($SCRIPT_ROOT + '/_register', {},
@@ -42,6 +63,10 @@ jQuery(function($, undefined) {
                 t.echo(event.data);
             };
         });
+
+    window.onbeforeunload = function (e) {
+        t.exec("logout");
+    };
 
 
 });
