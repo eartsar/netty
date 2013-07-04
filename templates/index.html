@@ -29,6 +29,9 @@ jQuery(function($, undefined) {
 
     var t = $('#mushy_client').terminal(function(command, term) {
         if (command !== '') {
+        	if (source === undefined) {
+        		term.error("Client is not connected to Mushy.");
+        	}
             try {
                 $.getJSON($SCRIPT_ROOT + '/_send', {
                     'line': command,
@@ -47,10 +50,12 @@ jQuery(function($, undefined) {
         width: 800,
         prompt: '> ',
         onExit: function(term) {
-            $.getJSON($SCRIPT_ROOT + '/_send', {
+        	if(uid !== undefined && uid != 0) {
+        		$.getJSON($SCRIPT_ROOT + '/_send', {
                     'line': "logout",
                     'uid': uid
-                });
+                });	
+        	}
         }
     });
 
@@ -58,10 +63,15 @@ jQuery(function($, undefined) {
     $.getJSON($SCRIPT_ROOT + '/_register', {},
         function(data) {
             uid = (data["uid"]);
-            source = new EventSource('/stream?uid=' + uid);
-            source.onmessage = function(event) {
-                t.echo(event.data);
-            };
+            if (uid == 0) {
+            	t.echo("Mushy is currently DOWN. Try again later!");
+            }
+            else {
+            	source = new EventSource('/stream?uid=' + uid);
+            	source.onmessage = function(event) {
+                	t.echo(event.data);
+            	};	
+            }
         });
 
     window.onbeforeunload = function (e) {

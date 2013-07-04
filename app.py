@@ -35,7 +35,8 @@ def stream():
 def send():
     line = request.args.get('line', '', type=str)
     uid = request.args.get('uid', '', type=str)
-    current_app.clients[uid].send_input(line)
+    if uid in current_app.clients:
+        current_app.clients[uid].send_input(line)
     return Response(status=204)
 
 
@@ -46,8 +47,12 @@ def recv(text, uid):
 @app.route('/_register')
 def register():
     uid = current_app.uid
-    current_app.clients[str(uid)] = client.Client(callback=recv, uid=uid)
-    current_app.uid += 1
+    try:
+        current_app.clients[str(uid)] = client.Client(callback=recv, uid=uid)
+        current_app.uid += 1
+    except:
+        # In the case of an exception being thrown, it means the server is now up.
+        uid = 0
     return jsonify({"uid": uid})
 
 
