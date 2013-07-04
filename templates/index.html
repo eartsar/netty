@@ -44,7 +44,9 @@ jQuery(function($, undefined) {
            term.echo('');
         }
     }, {
-        greetings: 'Mushy Web Client\nAfter you see the "1", type in your username.\nYeah, this is a bug.',
+        greetings: 'Welcome to the Mushy Web Client\n' + 
+                   'Please note that this is a PROTOTYPE CLIENT, and there are several known issues with coloring and formatting.\n' +
+                   'After you see the "1", type in your username.\n',
         name: 'mushy_client',
         height: 400,
         width: 800,
@@ -69,7 +71,11 @@ jQuery(function($, undefined) {
             else {
             	source = new EventSource('/stream?uid=' + uid);
             	source.onmessage = function(event) {
-                	t.echo(event.data);
+                    if (event.data === "1") {
+                        t.echo("Connection with server established. Enter in your username.");
+                    } else {
+                        t.echo(event.data);    
+                    }
             	};	
             }
         });
